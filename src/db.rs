@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context, Result};
 use crate::models::{DBState, Epic, Status, Story};
 
 pub struct JiraDatabase {
-    database: Box<dyn Database>,
+    pub database: Box<dyn Database>,
 }
 
 impl JiraDatabase {
@@ -36,8 +36,11 @@ impl JiraDatabase {
         let mut db_state = self.read_db()?;
         db_state.last_item_id += 1;
         db_state.stories.insert(db_state.last_item_id, story);
-        
-        let epic = db_state.epics.get_mut(&epic_id).context("epic_id not exist")?;
+
+        let epic = db_state
+            .epics
+            .get_mut(&epic_id)
+            .context("epic_id not exist")?;
         epic.stories.push(db_state.last_item_id);
 
         self.database.write_db(&db_state)?;
@@ -48,7 +51,7 @@ impl JiraDatabase {
         let mut db_state = self.read_db()?;
 
         if !db_state.epics.contains_key(&epic_id) {
-            return  Err(anyhow!("epic_id not exist"));
+            return Err(anyhow!("epic_id not exist"));
         }
 
         for story_id in db_state.epics[&epic_id].stories.iter() {
@@ -66,20 +69,26 @@ impl JiraDatabase {
         let mut db_state = self.read_db()?;
 
         // check epic_id
-        let epic = db_state.epics.get_mut(&epic_id).context("epic_id not exist")?;
+        let epic = db_state
+            .epics
+            .get_mut(&epic_id)
+            .context("epic_id not exist")?;
 
         // check story_id in epic.stories
-        let story_index_in_epic = epic.stories
+        let story_index_in_epic = epic
+            .stories
             .iter()
             .enumerate()
             .filter(|(i, &v)| v == story_id)
             .map(|(i, _v)| i)
             .collect::<Vec<usize>>();
-        let story_index_in_epic = story_index_in_epic.first().context("story_id not exist in epic.stories")?;
+        let story_index_in_epic = story_index_in_epic
+            .first()
+            .context("story_id not exist in epic.stories")?;
 
         // check story_id in stories
         if !db_state.stories.contains_key(&story_id) {
-            return  Err(anyhow!("story_id not exist"));
+            return Err(anyhow!("story_id not exist"));
         }
 
         // all good, remove
@@ -94,7 +103,10 @@ impl JiraDatabase {
         let mut db_state = self.read_db()?;
 
         // check epic_id
-        let epic = db_state.epics.get_mut(&epic_id).context("epic_id not exist")?;
+        let epic = db_state
+            .epics
+            .get_mut(&epic_id)
+            .context("epic_id not exist")?;
         epic.status = status;
 
         self.database.write_db(&db_state)?;
@@ -105,7 +117,10 @@ impl JiraDatabase {
         let mut db_state = self.read_db()?;
 
         // check story_id
-        let story = db_state.stories.get_mut(&story_id).context("story_id not exist")?;
+        let story = db_state
+            .stories
+            .get_mut(&story_id)
+            .context("story_id not exist")?;
         story.status = status;
 
         self.database.write_db(&db_state)?;
@@ -113,12 +128,12 @@ impl JiraDatabase {
     }
 }
 
-trait Database {
+pub trait Database {
     fn read_db(&self) -> Result<DBState>;
     fn write_db(&self, db_state: &DBState) -> Result<()>;
 }
 
-struct JSONFileDatabase {
+pub struct JSONFileDatabase {
     pub file_path: String,
 }
 
