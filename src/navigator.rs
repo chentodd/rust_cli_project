@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use anyhow::{anyhow, Context, Ok, Result};
 use std::rc::Rc;
 
